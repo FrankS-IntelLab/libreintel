@@ -1,22 +1,22 @@
-# BookLogic Studio
+# LibreIntel
 
-A Chrome/Edge extension that turns your browser into a PDF study assistant. Select text from any PDF, build an exploration tree, and ask AI to explain concepts — with full LaTeX math rendering and Mermaid flowchart export.
+Your intelligent reading & research companion — a Chrome/Edge extension that lets you capture text from any webpage or PDF, build exploration trees, and chat with AI to deepen your understanding. Full LaTeX math rendering and Mermaid flowchart export included.
 
 ## Features
 
-- **PDF text capture** — Select text in Chrome's PDF viewer, right-click → "Push to Panel"
-- **Concept exploration tree** — Organize snippets in a parent-child tree structure for chained exploration
+- **Text capture** — Select text on any webpage or PDF, right-click → "Push to Panel"
+- **Concept exploration tree** — Organize snippets in a parent-child tree for chained exploration
 - **AI-generated titles** — Each node gets a concise AI-generated title for quick scanning
-- **Pin & branch** — Pin a node as parent, then push new PDF selections as its children; or branch directly from AI responses
+- **Pin & branch** — Pin a node as parent, then push new selections as its children; or branch directly from AI responses
 - **Ask AI** — Click any node to chat with an LLM about it, with full conversation history
 - **Context-aware AI** — The LLM receives the full ancestor chain so it understands your exploration path
+- **Voice input** — Click 🎤 to speak your question — a voice overlay appears with live transcription
 - **Math rendering** — LaTeX math symbols rendered properly via KaTeX
 - **Markdown support** — AI responses with bold, lists, code blocks rendered correctly
-- **Mermaid flowchart export** — Export your study tree as a visual mind flow chart in Markdown
+- **Mermaid flowchart export** — Export your exploration tree as a visual mind flow chart in Markdown
 - **Preview & download** — Preview rendered exports (with flowchart) in the sidebar, or download as `.md`
-- **Per-branch export** — Export or preview any single node and its children, not just the whole tree
+- **Per-branch export** — Export or preview any single node and its children
 - **Timestamps** — Every node and chat message is timestamped
-- **Voice input** — Click 🎤 to speak your question instead of typing — a voice overlay appears on the page with live transcription
 - **Configurable LLM** — Bring your own API key; presets for DashScope (Qwen) and OpenAI
 - **Persistent storage** — Tree, chat history, and settings saved in `chrome.storage.local`
 - **No backend** — Everything runs locally in the browser
@@ -44,14 +44,15 @@ Any OpenAI-compatible API endpoint works (OpenAI, DashScope, OpenRouter, Ollama,
 
 ## Usage
 
-1. Open any PDF in Chrome
+1. Open any webpage or PDF in Chrome
 2. Select text → right-click → **Push "..." to Panel**
 3. Open the sidebar → your snippet appears as a tree node with an AI-generated title
 4. Click a node → chat with AI about the selected text
 5. **Branch deeper:** Select text in an AI response → click 🌿 to create a child node
-6. **Pin a parent:** Hover a node → click 🔗 to pin it → next PDF push becomes its child
-7. **Preview:** Click 👁 on a node to preview that branch as a rendered Mermaid flowchart
-8. **Export:** Click 📥 on a node to download that branch, or 📄 Export to download everything
+6. **Pin a parent:** Hover a node → click 🔗 to pin it → next push becomes its child
+7. **Voice input:** Click 🎤 in chat to speak your question
+8. **Preview:** Click 👁 on a node to preview that branch as a rendered Mermaid flowchart
+9. **Export:** Click 📥 on a node to download that branch, or 📄 Export to download everything
 
 ## Tech Stack
 
@@ -60,6 +61,7 @@ Any OpenAI-compatible API endpoint works (OpenAI, DashScope, OpenRouter, Ollama,
 - KaTeX (math rendering, bundled locally)
 - Marked (Markdown parsing, bundled locally)
 - Mermaid (flowchart rendering, bundled locally)
+- Web Speech API (voice input)
 
 ## Roadmap
 

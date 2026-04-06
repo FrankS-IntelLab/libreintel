@@ -493,17 +493,17 @@ async function showPreview(rootNodes) {
 function exportMarkdown() {
   if (nodes.length === 0) return;
   const date = new Date().toISOString().slice(0, 10);
-  downloadFile(`booklogic-export-${date}.md`, buildExportMd(nodes));
+  downloadFile(`libreintel-export-${date}.md`, buildExportMd(nodes));
 }
 
 function exportBranch(node) {
   const date = new Date().toISOString().slice(0, 10);
-  downloadFile(`booklogic-${node.id}-${date}.md`, buildExportMd([node]));
+  downloadFile(`libreintel-${node.id}-${date}.md`, buildExportMd([node]));
 }
 
 function buildExportMd(rootNodes) {
   const date = new Date().toISOString().slice(0, 10);
-  let md = `# BookLogic Study Export — ${date}\n\n`;
+  let md = `# LibreIntel Export — ${date}\n\n`;
 
   md += "```mermaid\nflowchart TD\n";
   const allNodes = [];
