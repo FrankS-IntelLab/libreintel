@@ -48,12 +48,13 @@ function getAncestors(id) {
   return path;
 }
 
-function addNode(text, parentId = null) {
+function addNode(text, parentId = null, sourceUrl = "") {
   const node = {
     id: genId(),
     parentId,
     title: truncate(text),
     fullText: text,
+    sourceUrl,
     timestamp: new Date().toISOString(),
     children: [],
     chatHistory: []
@@ -213,6 +214,18 @@ function renderNodeEl(node, depth) {
   row.appendChild(toggle);
   row.appendChild(label);
   row.appendChild(ts);
+  if (node.sourceUrl) {
+    const src = document.createElement("a");
+    src.className = "tree-source";
+    src.href = node.sourceUrl;
+    src.textContent = "📄";
+    src.title = node.sourceUrl;
+    src.addEventListener("click", (e) => {
+      e.stopPropagation();
+      chrome.tabs.create({ url: node.sourceUrl });
+    });
+    row.appendChild(src);
+  }
   row.appendChild(exp);
   row.appendChild(dl);
   row.appendChild(pin);
@@ -242,6 +255,16 @@ function openChat(nodeId) {
   chatBreadcrumb.textContent = ancestors.map(n => truncate(n.title, 20)).join(" → ");
 
   chatSnippet.textContent = node.fullText;
+  if (node.sourceUrl) {
+    const srcLink = document.createElement("a");
+    srcLink.className = "snippet-source";
+    srcLink.href = node.sourceUrl;
+    srcLink.textContent = node.sourceUrl.length > 60 ? node.sourceUrl.slice(0, 60) + "…" : node.sourceUrl;
+    srcLink.title = node.sourceUrl;
+    srcLink.addEventListener("click", (e) => { e.preventDefault(); chrome.tabs.create({ url: node.sourceUrl }); });
+    chatSnippet.appendChild(document.createElement("br"));
+    chatSnippet.appendChild(srcLink);
+  }
   chatMessages.innerHTML = "";
   node.chatHistory.forEach(m => appendMsg(m.role, m.content, false, m.timestamp));
 
@@ -269,7 +292,7 @@ voiceBtn.addEventListener("click", () => {
 
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === "push-text") {
-    addNode(msg.text, targetParentId);
+    addNode(msg.text, targetParentId, msg.sourceUrl || "");
     if (targetParentId) { targetParentId = null; renderTree(); }
   }
   if (msg.type === "voice-final") {
@@ -542,7 +565,9 @@ function renderNodeMd(node, headingLevel) {
   const h = "#".repeat(Math.min(headingLevel, 6));
   let md = `${h} ${node.title}\n`;
   md += `> ${node.fullText.replace(/\n/g, "\n> ")}\n`;
-  md += `> *${formatTime(node.timestamp)}*\n\n`;
+  md += `> *${formatTime(node.timestamp)}*`;
+  if (node.sourceUrl) md += ` | [Source](${node.sourceUrl})`;
+  md += `\n\n`;
 
   if (node.chatHistory.length > 0) {
     node.chatHistory.forEach(m => {

@@ -18,7 +18,7 @@
     btn.textContent = "Push to Panel";
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      chrome.runtime.sendMessage({ type: "push-text", text: selectedText });
+      chrome.runtime.sendMessage({ type: "push-text", text: selectedText, sourceUrl: window.location.href });
       removePopup();
     });
 

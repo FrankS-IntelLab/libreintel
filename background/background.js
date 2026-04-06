@@ -8,7 +8,7 @@ chrome.contextMenus.create({
 
 chrome.contextMenus.onClicked.addListener((info) => {
   if (info.menuItemId === "booklogic-push" && info.selectionText) {
-    chrome.runtime.sendMessage({ type: "push-text", text: info.selectionText }).catch(() => {});
+    chrome.runtime.sendMessage({ type: "push-text", text: info.selectionText, sourceUrl: info.pageUrl || "" }).catch(() => {});
   }
 });
 
