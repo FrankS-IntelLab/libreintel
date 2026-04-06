@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BookLogic Panel</title>
+  <link rel="stylesheet" href="sidebar.css">
+  <link rel="stylesheet" href="lib/katex.min.css">
+  <script src="lib/katex.min.js"></script>
+  <script src="lib/marked.min.js"></script>
+</head>
+<body>
+  <!-- Settings toggle -->
+  <div class="header">
+    <h1>BookLogic Studio</h1>
+    <button id="settings-btn" title="Settings">⚙️</button>
+  </div>
+
+  <!-- Settings panel (hidden by default) -->
+  <div id="settings" class="settings hidden">
+    <label>Preset
+      <select id="api-preset">
+        <option value="">Custom</option>
+        <option value="dashscope">DashScope (Qwen)</option>
+        <option value="openai">OpenAI</option>
+      </select>
+    </label>
+    <label>API Endpoint
+      <input type="text" id="api-url" placeholder="https://api.openai.com/v1/chat/completions">
+    </label>
+    <label>API Key
+      <input type="password" id="api-key" placeholder="sk-...">
+    </label>
+    <label>Model
+      <input type="text" id="api-model" placeholder="gpt-4o-mini">
+    </label>
+    <button id="save-settings">Save</button>
+    <span id="settings-status"></span>
+  </div>
+
+  <p class="hint">Select text in a PDF → right-click → "Push to Panel"</p>
+
+  <!-- Pushed items with Ask AI -->
+  <div id="items"></div>
+
+  <!-- Chat area (shown when asking AI about a snippet) -->
+  <div id="chat-area" class="hidden">
+    <div class="chat-header">
+      <button id="chat-back">← Back</button>
+      <span>Ask AI</span>
+    </div>
+    <div id="chat-snippet" class="snippet"></div>
+    <div id="chat-messages"></div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Ask about this text...">
+      <button id="chat-send">Send</button>
+    </div>
+  </div>
+
+  <script src="sidebar.js"></script>
+</body>
+</html>
