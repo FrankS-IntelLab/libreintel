@@ -15,6 +15,7 @@ let nodes = [];
 let activeNodeId = null;
 let targetParentId = null; // 📌 pinned parent for next push
 let conversationHistory = [];
+let isVoiceInput = false;
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
@@ -297,6 +298,7 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
   if (msg.type === "voice-final") {
     chatInput.value = msg.text;
+    isVoiceInput = true;
     sendMessage();
   }
 });
@@ -340,7 +342,9 @@ async function sendMessage() {
   // Build context from ancestor chain
   const ancestors = getAncestors(activeNodeId);
   const contextChain = ancestors.map(n => `"${truncate(n.fullText, 200)}"`).join(" → ");
-  const systemPrompt = `You are a study assistant. The user is exploring a chain of concepts from a PDF:\n\nExploration path: ${contextChain}\n\nCurrent focus:\n"${node.fullText}"\n\nAnswer their questions concisely.`;
+  const systemPrompt = `You are a study assistant. The user is exploring a chain of concepts from a PDF:\n\nExploration path: ${contextChain}\n\nCurrent focus:\n"${node.fullText}"\n\nAnswer their questions concisely.`
+    + (isVoiceInput ? ` The user's message was voice-transcribed; silently accommodate any possible speech artifacts without mentioning them.` : "");
+  isVoiceInput = false;
 
   try {
     // Show thinking indicator

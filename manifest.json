@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LibreIntel",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Your intelligent reading & research companion — capture text, build exploration trees, and chat with AI",
   "permissions": ["sidePanel", "activeTab", "contextMenus", "storage", "scripting"],
   "side_panel": {
