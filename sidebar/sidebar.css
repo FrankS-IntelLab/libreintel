@@ -55,6 +55,8 @@ body {
 .tree-row:hover .tree-del, .tree-row:hover .tree-pin, .tree-row:hover .tree-export { visibility: visible; }
 .tree-row.pinned .tree-pin { visibility: visible; }
 .tree-row.pinned { background: #fff8e1; }
+.tree-row.last-read { border-left: 3px solid #1a73e8; background: #e8f0fe; }
+.tree-row.prev-read { border-left: 3px solid #90caf9; background: #f5f9ff; }
 .tree-del:hover { color: #e53935; }
 
 /* Pin indicator bar */

@@ -122,8 +122,28 @@ function loadTree() {
 
 // --- Tree rendering ---
 
+// Collect all nodes in a subtree
+function collectNodes(node, out = []) {
+  out.push(node);
+  for (const c of node.children) collectNodes(c, out);
+  return out;
+}
+
+// Sets of nodeIds for last-read highlights (rebuilt each render)
+let lastReadIds = new Set();
+let prevReadIds = new Set();
+
 function renderTree() {
   treeEl.innerHTML = "";
+  // Build last-read and prev-read sets: per root node
+  lastReadIds = new Set();
+  prevReadIds = new Set();
+  for (const root of nodes) {
+    const all = collectNodes(root);
+    all.sort((a, b) => (b.lastAccessedAt || b.timestamp || "").localeCompare(a.lastAccessedAt || a.timestamp || ""));
+    if (all[0]) lastReadIds.add(all[0].id);
+    if (all[1]) prevReadIds.add(all[1].id);
+  }
   // Show pinned parent indicator
   const indicator = document.getElementById("pin-indicator");
   if (indicator) indicator.remove();
@@ -153,7 +173,7 @@ function renderNodeEl(node, depth) {
   wrap.style.paddingLeft = (depth * 16) + "px";
 
   const row = document.createElement("div");
-  row.className = "tree-row" + (node.id === targetParentId ? " pinned" : "");
+  row.className = "tree-row" + (node.id === targetParentId ? " pinned" : "") + (lastReadIds.has(node.id) ? " last-read" : prevReadIds.has(node.id) ? " prev-read" : "");
 
   const toggle = document.createElement("span");
   toggle.className = "tree-toggle";
@@ -249,6 +269,8 @@ function openChat(nodeId) {
   const node = findNode(nodeId);
   if (!node) return;
   activeNodeId = nodeId;
+  node.lastAccessedAt = new Date().toISOString();
+  saveTree();
   conversationHistory = node.chatHistory.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp }));
 
   // Breadcrumb
