@@ -165,6 +165,7 @@ function renderTree() {
   nodes.forEach(n => treeEl.appendChild(renderNodeEl(n, 0)));
   exportBtn.classList.remove("hidden");
   previewBtn.classList.remove("hidden");
+  jsonExportBtn.classList.remove("hidden");
 }
 
 function renderNodeEl(node, depth) {
@@ -212,8 +213,15 @@ function renderNodeEl(node, depth) {
   const dl = document.createElement("button");
   dl.className = "tree-export";
   dl.textContent = "📥";
-  dl.title = "Download this branch";
+  dl.title = "Download this branch (Markdown)";
   dl.addEventListener("click", (e) => { e.stopPropagation(); exportBranch(node); });
+
+  // 💾 Export this branch as JSON
+  const jsonDl = document.createElement("button");
+  jsonDl.className = "tree-export";
+  jsonDl.textContent = "💾";
+  jsonDl.title = "Export this branch (JSON)";
+  jsonDl.addEventListener("click", (e) => { e.stopPropagation(); exportBranchJson(node); });
 
   // 📌 Pin as parent button
   const pin = document.createElement("button");
@@ -249,6 +257,7 @@ function renderNodeEl(node, depth) {
   }
   row.appendChild(exp);
   row.appendChild(dl);
+  row.appendChild(jsonDl);
   row.appendChild(pin);
   row.appendChild(del);
   wrap.appendChild(row);
@@ -517,6 +526,15 @@ document.getElementById("preview-back").addEventListener("click", () => {
   treeView.classList.remove("hidden");
 });
 
+const jsonExportBtn = document.getElementById("json-export-btn");
+jsonExportBtn.addEventListener("click", exportAllJson);
+
+const jsonImportFile = document.getElementById("json-import-file");
+document.getElementById("json-import-btn").addEventListener("click", () => jsonImportFile.click());
+jsonImportFile.addEventListener("change", (e) => {
+  if (e.target.files[0]) { importJson(e.target.files[0]); e.target.value = ""; }
+});
+
 // Init mermaid
 mermaid.initialize({ startOnLoad: false, theme: "default" });
 
@@ -559,6 +577,45 @@ function exportMarkdown() {
 function exportBranch(node) {
   const date = new Date().toISOString().slice(0, 10);
   downloadFile(`libreintel-${node.id}-${date}.md`, buildExportMd([node]));
+}
+
+function exportBranchJson(node) {
+  const date = new Date().toISOString().slice(0, 10);
+  const blob = new Blob([JSON.stringify([node], null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `libreintel-${node.id}-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportAllJson() {
+  const date = new Date().toISOString().slice(0, 10);
+  const blob = new Blob([JSON.stringify(nodes, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `libreintel-export-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJson(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const imported = JSON.parse(reader.result);
+      if (!Array.isArray(imported)) throw new Error("Invalid format");
+      // Append imported trees as new root nodes
+      nodes.push(...imported);
+      saveTree();
+      renderTree();
+    } catch (e) {
+      alert("Import failed: " + e.message);
+    }
+  };
+  reader.readAsText(file);
 }
 
 function buildExportMd(rootNodes) {
