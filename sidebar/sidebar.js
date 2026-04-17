@@ -16,6 +16,7 @@ let activeNodeId = null;
 let targetParentId = null; // 📌 pinned parent for next push
 let conversationHistory = [];
 let isVoiceInput = false;
+let collapsedIds = new Set();
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
@@ -27,6 +28,17 @@ function formatTime(iso) {
   const d = new Date(iso);
   const pad = n => String(n).padStart(2, "0");
   return `${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function extractPage(url) {
+  if (!url) return null;
+  const m = url.match(/#page=(\d+)/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+function sourceLabel(url) {
+  const page = extractPage(url);
+  return page ? `📄 p.${page}` : "📄";
 }
 
 function findNode(id, list = nodes) {
@@ -179,13 +191,15 @@ function renderNodeEl(node, depth) {
   const toggle = document.createElement("span");
   toggle.className = "tree-toggle";
   if (node.children.length > 0) {
-    toggle.textContent = "▼";
+    const isCollapsed = collapsedIds.has(node.id);
+    toggle.textContent = isCollapsed ? "▶" : "▼";
     toggle.addEventListener("click", (e) => {
       e.stopPropagation();
       const childContainer = wrap.querySelector(".tree-children");
       if (childContainer) {
-        const collapsed = childContainer.classList.toggle("hidden");
-        toggle.textContent = collapsed ? "▶" : "▼";
+        if (collapsedIds.has(node.id)) { collapsedIds.delete(node.id); } else { collapsedIds.add(node.id); }
+        childContainer.classList.toggle("hidden");
+        toggle.textContent = collapsedIds.has(node.id) ? "▶" : "▼";
       }
     });
   } else {
@@ -247,7 +261,7 @@ function renderNodeEl(node, depth) {
     const src = document.createElement("a");
     src.className = "tree-source";
     src.href = node.sourceUrl;
-    src.textContent = "📄";
+    src.textContent = sourceLabel(node.sourceUrl);
     src.title = node.sourceUrl;
     src.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -264,7 +278,7 @@ function renderNodeEl(node, depth) {
 
   if (node.children.length > 0) {
     const childContainer = document.createElement("div");
-    childContainer.className = "tree-children";
+    childContainer.className = "tree-children" + (collapsedIds.has(node.id) ? " hidden" : "");
     node.children.forEach(c => childContainer.appendChild(renderNodeEl(c, depth + 1)));
     wrap.appendChild(childContainer);
   }
@@ -291,7 +305,11 @@ function openChat(nodeId) {
     const srcLink = document.createElement("a");
     srcLink.className = "snippet-source";
     srcLink.href = node.sourceUrl;
-    srcLink.textContent = node.sourceUrl.length > 60 ? node.sourceUrl.slice(0, 60) + "…" : node.sourceUrl;
+    const page = extractPage(node.sourceUrl);
+    const label = page
+      ? (node.sourceUrl.length > 50 ? node.sourceUrl.split("#")[0].slice(0, 50) + "…" : node.sourceUrl.split("#")[0]) + ` (p.${page})`
+      : (node.sourceUrl.length > 60 ? node.sourceUrl.slice(0, 60) + "…" : node.sourceUrl);
+    srcLink.textContent = label;
     srcLink.title = node.sourceUrl;
     srcLink.addEventListener("click", (e) => { e.preventDefault(); chrome.tabs.create({ url: node.sourceUrl }); });
     chatSnippet.appendChild(document.createElement("br"));
@@ -508,6 +526,22 @@ document.getElementById("save-settings").addEventListener("click", () => {
   });
 });
 
+// --- PDF localhost opener ---
+const pdfPortEl = document.getElementById("pdf-port");
+const pdfFilenameEl = document.getElementById("pdf-filename");
+chrome.storage.local.get(["booklogic_pdf_port"], (d) => {
+  if (d.booklogic_pdf_port) pdfPortEl.value = d.booklogic_pdf_port;
+});
+pdfPortEl.addEventListener("change", () => {
+  chrome.storage.local.set({ booklogic_pdf_port: pdfPortEl.value.trim() });
+});
+document.getElementById("pdf-open-btn").addEventListener("click", () => {
+  const port = pdfPortEl.value.trim() || "8000";
+  const file = pdfFilenameEl.value.trim();
+  if (!file) { statusEl.textContent = "Enter a filename"; setTimeout(() => (statusEl.textContent = ""), 2000); return; }
+  chrome.tabs.create({ url: `http://localhost:${port}/${file}` });
+});
+
 // --- Message listener ---
 
 // --- Init ---
@@ -649,7 +683,10 @@ function renderNodeMd(node, headingLevel) {
   let md = `${h} ${node.title}\n`;
   md += `> ${node.fullText.replace(/\n/g, "\n> ")}\n`;
   md += `> *${formatTime(node.timestamp)}*`;
-  if (node.sourceUrl) md += ` | [Source](${node.sourceUrl})`;
+  if (node.sourceUrl) {
+    const page = extractPage(node.sourceUrl);
+    md += page ? ` | [Source p.${page}](${node.sourceUrl})` : ` | [Source](${node.sourceUrl})`;
+  }
   md += `\n\n`;
 
   if (node.chatHistory.length > 0) {

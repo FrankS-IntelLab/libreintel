@@ -6,9 +6,26 @@ chrome.contextMenus.create({
   contexts: ["selection"]
 });
 
-chrome.contextMenus.onClicked.addListener((info) => {
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "booklogic-push" && info.selectionText) {
-    chrome.runtime.sendMessage({ type: "push-text", text: info.selectionText, sourceUrl: info.pageUrl || "" }).catch(() => {});
+    let url = (tab && tab.url) ? tab.url : (info.pageUrl || "");
+    // For PDFs over http/https, try to get current page number from the viewer
+    if (tab && tab.id && /^https?:\/\/.*\.pdf([?#]|$)/i.test(url)) {
+      try {
+        const [result] = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => {
+            const input = document.querySelector('input#pageNumber, input[type="number"]');
+            return input ? input.value : null;
+          }
+        });
+        if (result && result.result) {
+          // Strip any existing hash and append the page
+          url = url.split("#")[0] + "#page=" + result.result;
+        }
+      } catch (e) { /* ignore — non-injectable tabs */ }
+    }
+    chrome.runtime.sendMessage({ type: "push-text", text: info.selectionText, sourceUrl: url }).catch(() => {});
   }
 });
 

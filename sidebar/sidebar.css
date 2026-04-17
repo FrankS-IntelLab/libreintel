@@ -25,6 +25,10 @@ body {
 }
 .settings > button { margin-top: 6px; background: #1a73e8; color: #fff; border: none; border-radius: 4px; padding: 6px 14px; font-size: 12px; cursor: pointer; }
 #settings-status { margin-left: 8px; font-size: 12px; color: #2e7d32; }
+.settings hr { border: none; border-top: 1px solid #eee; margin: 10px 0; }
+.pdf-open-row { display: flex; gap: 4px; margin-top: 4px; }
+.pdf-open-row input { flex: 1; }
+.pdf-open-row button { white-space: nowrap; background: #1a73e8; color: #fff; border: none; border-radius: 4px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
 
 /* Tree */
 .tree-node { margin-bottom: 2px; }
