@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LibreIntel</title>
+  <link rel="stylesheet" href="sidebar.css">
+  <link rel="stylesheet" href="lib/katex.min.css">
+</head>
+<body>
+  <div class="header">
+    <h1>LibreIntel</h1>
+    <button id="settings-btn" title="Settings">⚙️</button>
+  </div>
+
+  <div id="settings" class="settings hidden">
+    <label>Preset
+      <select id="api-preset">
+        <option value="">Custom</option>
+        <option value="dashscope">DashScope (Qwen)</option>
+        <option value="openai">OpenAI</option>
+      </select>
+    </label>
+    <label>API Endpoint
+      <input type="text" id="api-url" placeholder="https://api.openai.com/v1/chat/completions">
+    </label>
+    <label>API Key
+      <input type="password" id="api-key" placeholder="sk-...">
+    </label>
+    <label>Model
+      <input type="text" id="api-model" placeholder="gpt-4o-mini">
+    </label>
+    <button id="save-settings">Save</button>
+    <span id="settings-status"></span>
+    <hr>
+    <label>PDF Server Port
+      <input type="number" id="pdf-port" value="8000" min="1" max="65535">
+    </label>
+    <div class="pdf-open-row">
+      <input type="text" id="pdf-filename" placeholder="book.pdf">
+      <button id="pdf-open-btn">📖 Open PDF</button>
+    </div>
+  </div>
+
+  <!-- Tree view -->
+  <div id="tree-view">
+    <p class="hint">Select text in a PDF → right-click → "Push to Panel"</p>
+    <div id="tree"></div>
+    <button id="export-btn" class="export-btn hidden">📄 Export</button>
+    <button id="preview-btn" class="preview-btn hidden">👁 Preview</button>
+    <button id="json-export-btn" class="export-btn hidden">💾 Export JSON</button>
+    <button id="json-import-btn" class="preview-btn">📂 Import JSON</button>
+    <input type="file" id="json-import-file" accept=".json" class="hidden">
+  </div>
+
+  <!-- Chat area -->
+  <div id="chat-area" class="hidden">
+    <div class="chat-header">
+      <button id="chat-back">← Back</button>
+      <span id="chat-breadcrumb"></span>
+    </div>
+    <div id="chat-snippet" class="snippet"></div>
+    <div id="chat-messages"></div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Ask about this text...">
+      <button id="voice-btn" class="voice-btn" title="Voice input">🎤</button>
+      <button id="chat-send">Send</button>
+    </div>
+    <button id="branch-btn" class="branch-btn hidden">🌿 Branch selected text as child node</button>
+  </div>
+
+  <!-- Preview panel -->
+  <div id="preview-area" class="hidden">
+    <div class="chat-header">
+      <button id="preview-back">← Back</button>
+      <span>Preview Export</span>
+    </div>
+    <div id="preview-content" class="preview-content"></div>
+  </div>
+
+  <script src="lib/katex.min.js"></script>
+  <script src="lib/marked.min.js"></script>
+  <script src="lib/mermaid.min.js"></script>
+
+  <script src="sidebar.js"></script>
+</body>
+</html>
