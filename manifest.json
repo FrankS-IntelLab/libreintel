@@ -3,7 +3,7 @@
   "name": "LibreIntel",
   "version": "0.7.1",
   "description": "Your intelligent reading & research companion — capture text, build exploration trees, and chat with AI",
-  "permissions": ["sidePanel", "activeTab", "contextMenus", "storage", "scripting"],
+  "permissions": ["sidePanel", "activeTab", "contextMenus", "storage", "scripting", "unlimitedStorage"],
   "side_panel": {
     "default_path": "sidebar/sidebar.html"
   },

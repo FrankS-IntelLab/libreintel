@@ -25,6 +25,7 @@ body {
 }
 .settings > button { margin-top: 6px; background: #1a73e8; color: #fff; border: none; border-radius: 4px; padding: 6px 14px; font-size: 12px; cursor: pointer; }
 #settings-status { margin-left: 8px; font-size: 12px; color: #2e7d32; }
+#settings-status.error { color: #b71c1c; }
 .settings hr { border: none; border-top: 1px solid #eee; margin: 10px 0; }
 .pdf-open-row { display: flex; gap: 4px; margin-top: 4px; }
 .pdf-open-row input { flex: 1; }
@@ -59,8 +60,6 @@ body {
 .tree-row:hover .tree-del, .tree-row:hover .tree-pin, .tree-row:hover .tree-export { visibility: visible; }
 .tree-row.pinned .tree-pin { visibility: visible; }
 .tree-row.pinned { background: #fff8e1; }
-.tree-row.last-read { border-left: 3px solid #1a73e8; background: #e8f0fe; }
-.tree-row.prev-read { border-left: 3px solid #90caf9; background: #f5f9ff; }
 .tree-del:hover { color: #e53935; }
 
 /* Pin indicator bar */
@@ -73,6 +72,10 @@ body {
 #unpin-btn {
   margin-left: auto; background: none; border: 1px solid #ccc; border-radius: 4px;
   padding: 2px 6px; font-size: 11px; cursor: pointer;
+}
+.storage-warning {
+  background: #ffebee; border: 1px solid #ef9a9a; border-radius: 6px;
+  color: #b71c1c; padding: 6px 10px; margin-bottom: 8px; font-size: 12px;
 }
 .tree-children { margin-left: 4px; border-left: 1px solid #ddd; }
 

@@ -41,6 +41,33 @@ function sourceLabel(url) {
   return page ? `📄 p.${page}` : "📄";
 }
 
+function showStatus(message, isError = false) {
+  statusEl.textContent = message;
+  statusEl.classList.toggle("error", isError);
+  if (!isError) setTimeout(() => (statusEl.textContent = ""), 2000);
+}
+
+function showStorageError(message) {
+  showStatus(message, true);
+  let warning = document.getElementById("storage-warning");
+  if (!warning) {
+    warning = document.createElement("div");
+    warning.id = "storage-warning";
+    warning.className = "storage-warning";
+    treeEl.before(warning);
+  }
+  warning.textContent = message;
+}
+
+function clearStorageError() {
+  const warning = document.getElementById("storage-warning");
+  if (warning) warning.remove();
+  if (statusEl.textContent.startsWith("Save failed:")) {
+    statusEl.textContent = "";
+    statusEl.classList.remove("error");
+  }
+}
+
 function findNode(id, list = nodes) {
   for (const n of list) {
     if (n.id === id) return n;
@@ -74,7 +101,14 @@ function addNode(text, parentId = null, sourceUrl = "") {
   };
   if (parentId) {
     const parent = findNode(parentId);
-    if (parent) parent.children.push(node);
+    if (parent) {
+      parent.children.push(node);
+    } else {
+      node.parentId = null;
+      targetParentId = null;
+      nodes.unshift(node);
+      showStatus("Pinned parent was missing; added as root.", true);
+    }
   } else {
     nodes.unshift(node);
   }
@@ -121,42 +155,90 @@ function removeNode(id, list = nodes) {
 
 // --- Persistence ---
 
+function normalizeTree(rawNodes) {
+  const byId = new Map();
+  const parentById = new Map();
+  const ordered = [];
+
+  function normalizeNode(raw, inheritedParentId = null) {
+    if (!raw || typeof raw !== "object") return;
+    const id = typeof raw.id === "string" && raw.id ? raw.id : genId();
+    if (byId.has(id)) return;
+
+    const parentId = raw.parentId || inheritedParentId || null;
+    const node = {
+      ...raw,
+      id,
+      parentId,
+      title: typeof raw.title === "string" && raw.title ? raw.title : truncate(raw.fullText || "Untitled"),
+      fullText: typeof raw.fullText === "string" ? raw.fullText : "",
+      sourceUrl: typeof raw.sourceUrl === "string" ? raw.sourceUrl : "",
+      timestamp: raw.timestamp || new Date().toISOString(),
+      children: [],
+      chatHistory: Array.isArray(raw.chatHistory) ? raw.chatHistory : []
+    };
+
+    byId.set(id, node);
+    parentById.set(id, parentId);
+    ordered.push(node);
+
+    if (Array.isArray(raw.children)) {
+      raw.children.forEach(child => normalizeNode(child, id));
+    }
+  }
+
+  if (Array.isArray(rawNodes)) rawNodes.forEach(node => normalizeNode(node));
+
+  const roots = [];
+  function createsCycle(id, parentId) {
+    let current = parentId;
+    const seen = new Set();
+    while (current) {
+      if (current === id) return true;
+      if (seen.has(current)) return true;
+      seen.add(current);
+      current = parentById.get(current);
+    }
+    return false;
+  }
+
+  ordered.forEach(node => {
+    if (node.parentId && byId.has(node.parentId) && !createsCycle(node.id, node.parentId)) {
+      byId.get(node.parentId).children.push(node);
+    } else {
+      node.parentId = null;
+      roots.push(node);
+    }
+  });
+
+  return roots;
+}
+
 function saveTree() {
-  chrome.storage.local.set({ booklogic_tree: nodes, booklogic_collapsed: [...collapsedIds] });
+  chrome.storage.local.set({ booklogic_tree: nodes, booklogic_collapsed: [...collapsedIds] }, () => {
+    const err = chrome.runtime.lastError;
+    if (err) {
+      console.error("Failed to save tree:", err.message);
+      showStorageError(`Save failed: ${err.message}`);
+    } else {
+      clearStorageError();
+    }
+  });
 }
 
 function loadTree() {
   chrome.storage.local.get(["booklogic_tree", "booklogic_collapsed"], (data) => {
-    nodes = data.booklogic_tree || [];
+    nodes = normalizeTree(data.booklogic_tree || []);
     collapsedIds = new Set(data.booklogic_collapsed || []);
+    saveTree();
     renderTree();
   });
 }
 
 // --- Tree rendering ---
 
-// Collect all nodes in a subtree
-function collectNodes(node, out = []) {
-  out.push(node);
-  for (const c of node.children) collectNodes(c, out);
-  return out;
-}
-
-// Sets of nodeIds for last-read highlights (rebuilt each render)
-let lastReadIds = new Set();
-let prevReadIds = new Set();
-
 function renderTree() {
   treeEl.innerHTML = "";
-  // Build last-read and prev-read sets: per root node
-  lastReadIds = new Set();
-  prevReadIds = new Set();
-  for (const root of nodes) {
-    const all = collectNodes(root);
-    all.sort((a, b) => (b.lastAccessedAt || b.timestamp || "").localeCompare(a.lastAccessedAt || a.timestamp || ""));
-    if (all[0]) lastReadIds.add(all[0].id);
-    if (all[1]) prevReadIds.add(all[1].id);
-  }
   // Show pinned parent indicator
   const indicator = document.getElementById("pin-indicator");
   if (indicator) indicator.remove();
@@ -187,7 +269,7 @@ function renderNodeEl(node, depth) {
   wrap.style.paddingLeft = (depth * 16) + "px";
 
   const row = document.createElement("div");
-  row.className = "tree-row" + (node.id === targetParentId ? " pinned" : "") + (lastReadIds.has(node.id) ? " last-read" : prevReadIds.has(node.id) ? " prev-read" : "");
+  row.className = "tree-row" + (node.id === targetParentId ? " pinned" : "");
 
   const toggle = document.createElement("span");
   toggle.className = "tree-toggle";
@@ -294,8 +376,6 @@ function openChat(nodeId) {
   const node = findNode(nodeId);
   if (!node) return;
   activeNodeId = nodeId;
-  node.lastAccessedAt = new Date().toISOString();
-  saveTree();
   conversationHistory = node.chatHistory.map(m => ({ role: m.role, content: m.content, timestamp: m.timestamp }));
 
   // Breadcrumb
@@ -523,8 +603,8 @@ document.getElementById("save-settings").addEventListener("click", () => {
     model: document.getElementById("api-model").value.trim()
   };
   chrome.storage.local.set({ booklogic_api: cfg }, () => {
-    statusEl.textContent = "✓ Saved";
-    setTimeout(() => (statusEl.textContent = ""), 2000);
+    const err = chrome.runtime.lastError;
+    showStatus(err ? `Save failed: ${err.message}` : "✓ Saved", Boolean(err));
   });
 });
 
@@ -644,7 +724,8 @@ function importJson(file) {
       const imported = JSON.parse(reader.result);
       if (!Array.isArray(imported)) throw new Error("Invalid format");
       // Append imported trees as new root nodes
-      nodes.push(...imported);
+      nodes.push(...normalizeTree(imported));
+      nodes = normalizeTree(nodes);
       saveTree();
       renderTree();
     } catch (e) {
